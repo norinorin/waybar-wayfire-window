@@ -314,8 +314,6 @@ static void handle_toplevel_app_id(void *data,
     struct toplevel_data *win = data;
     free(win->app_id);
     win->app_id = strdup(app_id);
-    for (char *p = win->app_id; *p; ++p)
-        *p = (char)tolower((unsigned char)*p);
     wlr_log(WLR_INFO, "Window app_id changed: %s", app_id);
 }
 
