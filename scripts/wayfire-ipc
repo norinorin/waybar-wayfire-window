@@ -1,0 +1,13 @@
+#!/bin/bash
+
+wayfire_ipc() {
+    local json="$1"
+    local utf8_json=$(echo -n "$json" | iconv -t utf-8)
+    local length=$(echo -n "$utf8_json" | wc -c)
+    local length_le=$(printf "%08x" "$length" | sed -E 's/(..)(..)(..)(..)/\4\3\2\1/' | sed 's/\(..\)/\\x\1/g')
+    printf "$length_le%s" "$utf8_json" | socat - UNIX-CONNECT:/tmp/wayfire-wayland-1.socket | tail -c +5
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    wayfire_ipc "$1"
+fi
