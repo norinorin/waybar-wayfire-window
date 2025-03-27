@@ -14,7 +14,7 @@ void int_to_little_endian(uint32_t value, unsigned char *output)
     output[0] = value & 0xFF;
     output[1] = (value >> 8) & 0xFF;
     output[2] = (value >> 16) & 0xFF;
-    output[3] = (value >> 24) & 0xFF;
+    output[3] = (unsigned char)(value >> 24) & 0xFF;
 }
 
 int open_wayfire_ipc_connection()
@@ -59,7 +59,16 @@ char *send_wayfire_ipc(const char *json_request)
         return NULL;
     }
 
-    uint32_t json_length = strlen(json_request);
+    size_t len = strlen(json_request);
+
+    if (len > UINT32_MAX)
+    {
+        fprintf(stderr, "json request too long\n");
+        return NULL;
+    }
+
+    uint32_t json_length = (uint32_t)len;
+
     unsigned char header[4];
     int_to_little_endian(json_length, header);
 

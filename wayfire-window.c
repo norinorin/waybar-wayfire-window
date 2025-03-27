@@ -74,7 +74,15 @@ int copy_file(const char *source, const char *destination)
     struct stat stat_buf;
     fstat(src, &stat_buf);
 
-    if (sendfile(dest, src, &offset, stat_buf.st_size) == -1)
+    if (stat_buf.st_size < 0)
+    {
+        perror("size is negative");
+        close(src);
+        close(dest);
+        return 1;
+    }
+
+    if (sendfile(dest, src, &offset, (size_t)stat_buf.st_size) == -1)
     {
         perror("sendfile error");
         close(src);
@@ -308,7 +316,7 @@ static void handle_toplevel_app_id(void *data,
     free(win->app_id);
     win->app_id = strdup(app_id);
     for (char *p = win->app_id; *p; ++p)
-        *p = tolower(*p);
+        *p = (char)tolower((unsigned char)*p);
     wlr_log(WLR_INFO, "Window app_id changed: %s", app_id);
 }
 
@@ -452,7 +460,7 @@ static const struct zwlr_foreign_toplevel_manager_v1_listener manager_listener =
     .toplevel = handle_toplevel,
 };
 
-static void registry_handler(void *data, struct wl_registry *registry, uint32_t id,
+static void registry_handler(void *data, struct wl_registry *reg, uint32_t id,
                              const char *interface, uint32_t version)
 {
     wlr_log(WLR_DEBUG, "Got a registry event for %s id %d", interface, id);
@@ -460,13 +468,13 @@ static void registry_handler(void *data, struct wl_registry *registry, uint32_t 
     if (strcmp(interface, wl_output_interface.name) == 0)
     {
         struct output_data *out = calloc(1, sizeof(struct output_data));
-        out->output = wl_registry_bind(registry, id, &wl_output_interface, 4);
+        out->output = wl_registry_bind(reg, id, &wl_output_interface, 4);
         wl_list_insert(&output_list, &out->link);
         wl_output_add_listener(out->output, &output_listener, out);
     }
     else if (strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name) == 0)
     {
-        toplevel_manager = wl_registry_bind(registry, id, &zwlr_foreign_toplevel_manager_v1_interface, 3);
+        toplevel_manager = wl_registry_bind(reg, id, &zwlr_foreign_toplevel_manager_v1_interface, 3);
         zwlr_foreign_toplevel_manager_v1_add_listener(toplevel_manager, &manager_listener, NULL);
     }
 }
