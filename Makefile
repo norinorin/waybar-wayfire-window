@@ -17,5 +17,8 @@ $(TARGET): $(SRC)
 debug: $(SRC)
 	$(CC) -o $(TARGET) $(SRC) $(CFLAGS) $(LDFLAGS) -g
 
+find-icon: find-icon.c find-icon-cli.c
+	$(CC) -o find-icon-cli find-icon.c find-icon-cli.c ${GTK_CFLAGS} ${GTK_LDFLAGS}
+
 clean:
 	rm -f $(TARGET)
