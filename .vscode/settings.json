@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h": "c",
+        "gtk.h": "c"
+    }
+}

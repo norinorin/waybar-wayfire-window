@@ -1,0 +1,5 @@
+#!/bin/sh
+
+source "$HOME/playground/waybar-wayfire-window/scripts/wayfire-ipc"
+
+wayfire_ipc '{"method": "window-rules/get-focused-view"}' | jq '.info == null'
