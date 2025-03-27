@@ -18,13 +18,68 @@ int file_exists(const char *path)
     return (stat(path, &buffer) == 0);
 }
 
+int is_regular_file(const char *path)
+{
+    struct stat path_stat;
+    return (stat(path, &path_stat) == 0) && S_ISREG(path_stat.st_mode);
+}
+
+char *get_desktop_path(const char *app_id)
+{
+    struct dirent *entry;
+    DIR *dir = opendir(APPLICATIONS_DIR);
+    if (!dir)
+    {
+        perror("opendir failed");
+        return NULL;
+    }
+
+    char *matched_file = NULL;
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (entry->d_name[0] == '.')
+            continue;
+
+        char full_path[PATH_MAX];
+        snprintf(full_path, sizeof(full_path), APPLICATIONS_DIR "%s", entry->d_name);
+
+        if (!is_regular_file(full_path))
+            continue;
+
+        size_t len = strlen(entry->d_name);
+        if (len <= 8 || strcmp(entry->d_name + len - 8, ".desktop") != 0)
+            continue;
+
+        if (strncasecmp(entry->d_name, app_id, len - 8) == 0)
+        {
+            matched_file = strdup(entry->d_name);
+            break;
+        }
+    }
+
+    closedir(dir);
+
+    if (!matched_file)
+        return NULL;
+
+    static char desktop_path[PATH_MAX];
+    snprintf(desktop_path, sizeof(desktop_path), APPLICATIONS_DIR "%s", matched_file);
+    free(matched_file);
+    return desktop_path;
+}
+
 char *get_icon_name_from_desktop(const char *app_id)
 {
-    char desktop_path[512];
-    snprintf(desktop_path, sizeof(desktop_path), APPLICATIONS_DIR "%s.desktop", app_id);
+    char *desktop_path = get_desktop_path(app_id);
 
-    if (!file_exists(desktop_path))
+    if (!desktop_path)
+    {
+        printf("File does not exist\n");
         return NULL;
+    }
+
+    printf("Found desktop file: %s\n", desktop_path);
 
     GKeyFile *key_file = g_key_file_new();
     if (!g_key_file_load_from_file(key_file, desktop_path, G_KEY_FILE_NONE, NULL))
@@ -36,6 +91,7 @@ char *get_icon_name_from_desktop(const char *app_id)
     char *icon_name = g_key_file_get_string(key_file, "Desktop Entry", "Icon", NULL);
     g_key_file_free(key_file);
 
+    printf("Detected icon name: %s\n", icon_name);
     return icon_name;
 }
 
@@ -48,23 +104,25 @@ char *search_icon(const char *base_dir, const char *icon_name)
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
     {
-        if (entry->d_type == DT_REG)
+        if (entry->d_name[0] == '.')
+            continue;
+
+        char full_path[512];
+        snprintf(full_path, sizeof(full_path), "%s/%s", base_dir, entry->d_name);
+
+        if (!is_regular_file(full_path))
+            continue;
+
+        char filename_no_ext[256];
+        snprintf(filename_no_ext, sizeof(filename_no_ext), "%s", entry->d_name);
+        char *dot = strrchr(filename_no_ext, '.');
+        if (dot)
+            *dot = '\0';
+
+        if (strcasecmp(filename_no_ext, icon_name) == 0)
         {
-            const char *filename = entry->d_name;
-
-            char filename_no_ext[256];
-            snprintf(filename_no_ext, sizeof(filename_no_ext), "%s", filename);
-            char *dot = strrchr(filename_no_ext, '.');
-            if (dot)
-                *dot = '\0';
-
-            if (strcasecmp(filename_no_ext, icon_name) == 0)
-            {
-                char *full_path = malloc(512);
-                snprintf(full_path, 512, "%s%s", base_dir, filename);
-                closedir(dir);
-                return full_path;
-            }
+            closedir(dir);
+            return strdup(full_path);
         }
     }
 
