@@ -25,7 +25,6 @@
 
 struct output_data;
 struct toplevel_data;
-struct focused_view_data;
 
 struct output_data
 {
