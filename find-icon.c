@@ -14,14 +14,14 @@
 
 int file_exists(const char *path)
 {
-    struct stat buffer;
-    return (stat(path, &buffer) == 0);
+    struct stat buf;
+    return (stat(path, &buf) == 0);
 }
 
 int is_regular_file(const char *path)
 {
-    struct stat path_stat;
-    return (stat(path, &path_stat) == 0) && S_ISREG(path_stat.st_mode);
+    struct stat buf;
+    return (stat(path, &buf) == 0) && S_ISREG(buf.st_mode);
 }
 
 char *get_desktop_path(const char *app_id)
