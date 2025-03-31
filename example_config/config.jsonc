@@ -3,7 +3,7 @@
     // dual monitor setup example
     // add more monitors as needed
     {
-        "include": "~/.config/waybar/presets/wayfire/default_modules.jsonc",
+        "include": "/path/to/default_modules.jsonc",
         "output": "HDMI-A-1",
         "custom/title": {
             "format": "{}",
@@ -18,7 +18,7 @@
         }
     },
     {
-        "include": "~/.config/waybar/presets/wayfire/default_modules.jsonc",
+        "include": "/path/to/default_modules.jsonc",
         "output": "DVI-D-1",
         "custom/title": {
             "format": "{}",
