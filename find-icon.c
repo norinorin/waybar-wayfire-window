@@ -5,7 +5,6 @@
 #include <gtk/gtk.h>
 #include <sys/stat.h>
 #include <glib.h>
-#include <ctype.h>
 #include <unistd.h>
 
 #define ICON_DIR "/usr/share/icons/hicolor/"
