@@ -8,11 +8,14 @@ CFLAGS = -I/usr/include/wlroots-0.18 -I/usr/include/cjson $(GTK_CFLAGS) -Wall -W
 LDFLAGS = -L/usr/lib/wlroots-0.18 -lwlroots-0.18 -lwayland-client -lcjson $(GTK_LDFLAGS)
 TARGET = wayfire-window
 SRC = wayfire-window.c wlr-foreign-toplevel-management-unstable-v1-protocol.c wayfire-ipc.c find-icon.c
+ASSETS_DIR = ~/.local/share/waybar-wayfire-window/assets
 
 all: $(TARGET)
 
 $(TARGET): $(SRC)
 	$(CC) -o $(TARGET) $(SRC) $(CFLAGS) $(LDFLAGS)
+	mkdir -p $(ASSETS_DIR)
+	cp -r assets/* $(ASSETS_DIR)
 
 debug: $(SRC)
 	$(CC) -o $(TARGET) $(SRC) $(CFLAGS) $(LDFLAGS) -g

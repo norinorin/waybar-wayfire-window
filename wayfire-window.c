@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/prctl.h>
 #include <signal.h>
+#include <pwd.h>
 
 #include <wayland-client.h>
 #include <wlr/util/log.h>
@@ -18,8 +19,6 @@
 
 #define GET_FOCUSED_VIEW "{\"method\": \"window-rules/get-focused-view\"}"
 #define GET_FOCUSED_OUTPUT "{\"method\": \"window-rules/get-focused-output\"}"
-#define BASE_DIR "/home/nori/playground/waybar-wayfire-window"
-#define ASSETS_DIR BASE_DIR "/assets"
 
 struct output_data;
 struct toplevel_data;
@@ -48,6 +47,17 @@ static struct wl_list toplevel_list;
 static struct wl_display *display = NULL;
 static struct wl_registry *registry = NULL;
 static struct zwlr_foreign_toplevel_manager_v1 *toplevel_manager = NULL;
+static char *assets_dir = NULL;
+
+char* join_path(const char* a, const char* b) {
+    int needs_slash = (a[strlen(a) - 1] != '/');
+    size_t len = strlen(a) + strlen(b) + (needs_slash ? 2 : 1);
+    char* result = malloc(len);
+    if (!result) return NULL;
+
+    snprintf(result, len, "%s%s%s", a, needs_slash ? "/" : "", b);
+    return result;
+}
 
 int copy_file(const char *source, const char *destination)
 {
@@ -157,10 +167,14 @@ static void update_waybar(struct output_data *out)
         }
     }
 
-    if (!icon_found)
+    if (!icon_found && assets_dir)
     {
         wlr_log(WLR_DEBUG, "Icon not found, placing a dummy transparent image to %s", filename);
-        copy_file(ASSETS_DIR "/transparent.png", filename);
+        char *transparent_image = join_path(assets_dir, "transparent.png");
+        if (transparent_image) {
+            copy_file(transparent_image, filename);
+            free(transparent_image);
+        }
     }
 
     system("pkill -RTMIN+16 waybar");
@@ -498,6 +512,7 @@ static void cleanup(void)
     }
 
     close_wayfire_ipc_connection();
+    free(assets_dir);
 }
 
 int main()
@@ -506,6 +521,16 @@ int main()
     {
         perror("prctl");
         exit(EXIT_FAILURE);
+    }
+
+    uid_t uid = getuid();
+    struct passwd *pw = getpwuid(uid);
+
+    if (pw) {
+        assets_dir = join_path(pw->pw_dir, ".local/share/waybar-wayfire-window/assets");
+    } else {
+        perror("getpwuid");
+        return 1;
     }
 
     wlr_log_init(WLR_DEBUG, NULL);
