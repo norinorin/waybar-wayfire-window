@@ -48,7 +48,6 @@ static struct wl_list toplevel_list;
 static struct wl_display *display = NULL;
 static struct wl_registry *registry = NULL;
 static struct zwlr_foreign_toplevel_manager_v1 *toplevel_manager = NULL;
-// static struct output_data *last_focused_output = NULL;
 
 int copy_file(const char *source, const char *destination)
 {
